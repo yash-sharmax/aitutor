@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AdaptLearn AI — Unified Action-Chat Feed</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Marked.js CDN for Markdown Parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <!-- Chart.js CDN for Progress Analytics Graph -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- KaTeX CDN for High-Performance LaTeX Math Rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    /* KaTeX equation display formatting */
+    .katex-display { margin: 0.5em 0 !important; overflow-x: auto; overflow-y: hidden; }
+    /* Markdown element styling in chat bubbles */
+    .chat-markdown p { margin-bottom: 0.5rem; }
+    .chat-markdown p:last-child { margin-bottom: 0; }
+    .chat-markdown ul { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+    .chat-markdown ol { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+    .chat-markdown h1, .chat-markdown h2, .chat-markdown h3, .chat-markdown h4 { font-weight: 700; margin-top: 0.5rem; margin-bottom: 0.25rem; }
+    .chat-markdown code { font-family: 'JetBrains Mono', monospace; background: rgba(0,0,0,0.05); padding: 0.15em 0.35em; border-radius: 0.25rem; font-size: 0.85em; }
+    .chat-markdown pre { background: #1e293b; color: #f8fafc; padding: 0.75rem; border-radius: 0.75rem; overflow-x: auto; margin: 0.5rem 0; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
+    .chat-markdown blockquote { border-left: 3px solid #6366f1; padding-left: 0.75rem; color: #475569; font-style: italic; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col overflow-hidden">
+
+  <!-- TOP HEADER -->
+  <header class="bg-white border-b border-slate-200 h-16 shrink-0 z-20 px-4 sm:px-6 flex items-center justify-between shadow-xs">
+    <div class="flex items-center space-x-3">
+      <!-- Button to toggle Left History Sidebar -->
+      <button onclick="toggleHistorySidebar()" title="Toggle Chat History" class="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+      </button>
+
+      <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm shadow-indigo-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="text-lg font-extrabold tracking-tight bg-gradient-to-r from-slate-900 to-indigo-900 bg-clip-text text-transparent">AdaptLearn AI</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200/60 rounded-full">Adaptive Tutor</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Controls: New Chat, Academic Level, Profile & Mobile Toggle -->
+    <div class="flex items-center space-x-2 sm:space-x-2.5">
+      <!-- New Chat Button in Header -->
+      <button onclick="startNewChat()" title="Start fresh conversation with cleared context memory" class="flex items-center space-x-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition shadow-2xs">
+        <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        <span class="hidden sm:inline">New Chat</span>
+      </button>
+
+      <!-- Academic Level Pill -->
+      <button onclick="promptChangeLevel()" id="academicLevelPill" class="hidden sm:flex items-center space-x-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition">
+        <span>🎓</span>
+        <span id="levelPillText">Level: Setting up...</span>
+      </button>
+
+      <!-- Student Profile Pill -->
+      <div id="userHeaderPill" onclick="openLoginModal()" class="flex items-center space-x-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full cursor-pointer transition">
+        <div class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center" id="avatarInitial">
+          A
+        </div>
+        <span class="text-xs font-bold text-slate-700" id="headerUsername">alex</span>
+        <span class="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full" id="headerScore">0 pts</span>
+      </div>
+
+      <!-- Mobile Sidebar Toggle -->
+      <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN 3-PANE WORKSPACE (Strict 3-Column Non-Overlapping Layout) -->
+  <div class="flex-grow flex flex-row overflow-hidden relative w-full h-[calc(100vh-4rem)]">
+
+    <!-- Mobile Drawer Backdrop Overlay -->
+    <div id="sidebarBackdrop" onclick="closeAllDrawers()" class="fixed inset-0 bg-slate-900/40 z-20 hidden lg:hidden transition-opacity"></div>
+
+    <!-- ==================== LEFT PANE: HISTORY SIDEBAR (Column 1) ==================== -->
+    <aside id="historySidebar" class="fixed inset-y-16 left-0 z-30 w-64 lg:static lg:inset-auto lg:h-full lg:w-64 xl:w-72 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 -translate-x-full lg:translate-x-0 shadow-lg lg:shadow-none shrink-0">
+      
+      <!-- History Header -->
+      <div class="p-3.5 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800">Chat History</h3>
+        </div>
+        <div class="flex items-center space-x-1">
+          <button onclick="startNewChat()" title="Start fresh conversation with cleared context memory" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 transition flex items-center space-x-1">
+            <span>➕</span>
+            <span>New</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable History Sessions -->
+      <div id="historySessionsList" class="flex-grow overflow-y-auto p-2.5 space-y-1 text-xs">
+        <div class="text-center py-6 text-slate-400 text-xs">
+          Loading history...
+        </div>
+      </div>
+
+      <!-- History Footer -->
+      <div class="p-3 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between text-xs">
+        <button onclick="startNewChat()" title="Completely clear all context memory and sessions" class="text-slate-500 hover:text-rose-600 font-semibold text-[11px] flex items-center space-x-1.5 transition">
+          <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <span>Clear Context</span>
+        </button>
+        <button onclick="loadHistorySidebar()" title="Refresh sessions" class="text-slate-400 hover:text-indigo-600 p-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- ==================== CENTER PANE: ACTION-CHAT FEED (Column 2) ==================== -->
+    <main class="flex-1 min-w-0 flex flex-col h-full bg-slate-50 relative overflow-hidden">
+
+      <!-- Scrollable Chat Feed Area -->
+      <div id="chatFeed" class="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6">
+        
+        <!-- Welcome Greeting AI Card -->
+        <div id="welcomeMessage" class="flex items-start space-x-3 max-w-3xl">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-3xl rounded-tl-sm p-5 shadow-xs text-sm leading-relaxed text-slate-700 space-y-2.5">
+            <div class="flex items-center space-x-2">
+              <span class="font-bold text-slate-900">AdaptLearn AI Tutor</span>
+              <span class="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">Memory & KaTeX Active</span>
+            </div>
+            <p>Welcome! I remember our prior conversation context, calibrate directly to your academic level, and render math equations seamlessly:</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+              <div class="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl">
+                <span class="font-bold text-indigo-700 block mb-0.5">🧠 Dynamic Quiz Mode</span>
+                <span class="text-slate-500">Ask <em>"Give me a quiz on [topic]"</em> for an adaptive diagnostic quiz (3-15 questions) dynamically scaled by the AI Orchestrator.</span>
+              </div>
+              <div class="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl">
+                <span class="font-bold text-purple-700 block mb-0.5">📖 Concept Explain Mode</span>
+                <span class="text-slate-500">Ask <em>"Explain [topic]"</em> for full LaTeX equations (e.g. $F = ma$, $\Delta S \ge 0$) and analogies.</span>
+              </div>
+            </div>
+            <p class="text-xs text-slate-400">Click <strong>"New Chat"</strong> anytime to reset the AI context memory.</p>
+          </div>
+        </div>
+
+        <!-- Chat messages and widgets are appended here dynamically -->
+
+      </div>
+
+      <!-- Staged Image Preview Bar (Above Input) -->
+      <div id="stagedImageContainer" class="hidden bg-white border-t border-slate-200 px-4 py-2 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <img id="stagedImageThumb" src="" alt="Thumbnail" class="w-12 h-12 rounded-lg object-cover border border-slate-300">
+          <div>
+            <span class="text-xs font-bold text-slate-800" id="stagedImageName">handwritten_notes.jpg</span>
+            <p class="text-[10px] text-indigo-600">Image attached. Type question or press Send to evaluate!</p>
+          </div>
+        </div>
+        <button onclick="clearStagedImage()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold p-1">✕ Remove</button>
+      </div>
+
+      <!-- AI Thinking Typing Indicator -->
+      <div id="typingIndicator" class="hidden px-6 py-2">
+        <div class="inline-flex items-center space-x-2.5 bg-white border border-slate-200 px-4 py-2 rounded-2xl shadow-xs">
+          <div class="flex space-x-1">
+            <div class="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style="animation-delay: 0ms"></div>
+            <div class="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style="animation-delay: 150ms"></div>
+            <div class="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style="animation-delay: 300ms"></div>
+          </div>
+          <span class="text-xs font-semibold text-slate-500" id="typingText">Gemini is synthesizing response...</span>
+        </div>
+      </div>
+
+      <!-- Bottom Chat Input Bar -->
+      <div class="bg-white border-t border-slate-200 p-4 shrink-0">
+        <form id="chatForm" onsubmit="handleChatSubmit(event)" class="max-w-4xl mx-auto flex items-center space-x-2">
+          <!-- Hidden File Input -->
+          <input type="file" id="chatFileInput" accept="image/*" capture="environment" class="hidden" onchange="handleFilePicked(event)">
+          
+          <!-- Attach Button -->
+          <button type="button" onclick="document.getElementById('chatFileInput').click()" title="Attach handwritten note or photo" class="p-3 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 rounded-2xl transition shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </button>
+
+          <!-- Input Text Field -->
+          <input type="text" id="chatInput" placeholder="Ask: 'Give me a quiz on C++' or 'Explain Thermodynamics'..." autocomplete="off" class="flex-grow bg-slate-50 border border-slate-300 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-2xl px-4 py-3 text-sm font-semibold transition outline-none">
+
+          <!-- Send Button -->
+          <button type="submit" id="sendBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-2xl shadow-sm transition shrink-0 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+        </form>
+      </div>
+
+    </main>
+
+    <!-- ==================== RIGHT PANE (25% WIDTH): ANALYTICS DASHBOARD (Column 3) ==================== -->
+    <aside id="analyticsSidebar" class="fixed inset-y-16 right-0 z-30 w-80 lg:static lg:inset-auto lg:h-full lg:w-1/4 xl:w-80 bg-white border-l border-slate-200 flex flex-col transition-all duration-300 translate-x-full lg:translate-x-0 shadow-lg lg:shadow-none shrink-0">
+      
+      <!-- Sidebar Header -->
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+          <h3 class="text-sm font-extrabold text-slate-900 tracking-tight">Student Knowledge Graph</h3>
+        </div>
+        <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+
+      <!-- Scrollable Analytics Body -->
+      <div class="flex-grow overflow-y-auto p-4 space-y-5">
+
+        <!-- Academic Level Profile Card -->
+        <div class="bg-gradient-to-br from-indigo-50/80 to-purple-50/60 border border-indigo-100 rounded-2xl p-3.5 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Academic Standard</span>
+            <button onclick="promptChangeLevel()" class="text-[10px] font-bold text-indigo-600 hover:underline">Change</button>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-lg">🎓</span>
+            <span class="text-sm font-bold text-slate-800" id="sideAcademicLevel">Not Set</span>
+          </div>
+          <p class="text-[10px] text-slate-500 leading-tight">Controls difficulty, technical vocabulary, and distractor rigor.</p>
+        </div>
+        
+        <!-- Key Metrics Grid -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Mastery Score</span>
+            <span class="text-2xl font-extrabold text-indigo-700 font-mono" id="sideScore">0</span>
+            <span class="text-[10px] text-emerald-600 font-semibold block mt-0.5">+10 pts per correct</span>
+          </div>
+
+          <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Accuracy</span>
+            <span class="text-2xl font-extrabold text-slate-800 font-mono" id="sideAccuracy">0%</span>
+            <span class="text-[10px] text-indigo-600 font-semibold block mt-0.5" id="sideAttempts">0 attempts</span>
+          </div>
+        </div>
+
+        <!-- Progress Curve Graph (Chart.js) -->
+        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center space-x-1.5">
+              <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+              <span>Learning Curve</span>
+            </span>
+            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full" id="chartProgressSubtitle">Mastery Points</span>
+          </div>
+          <div class="h-36 w-full relative">
+            <canvas id="progressChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Detected Knowledge Gaps (Red Badges) -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center space-x-1.5">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+              <span>Diagnosed Blind Spots</span>
+            </h4>
+            <span id="gapsBadgeCount" class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">0</span>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-tight">Click any badge to launch a remedial diagnostic test on that gap.</p>
+
+          <div id="sideGapsContainer" class="flex flex-wrap gap-1.5 pt-1">
+            <div class="w-full text-center py-4 text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-xl">
+              No blind spots identified yet.
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Diagnostic Logs -->
+        <div class="space-y-2 pt-2 border-t border-slate-100">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Activity Timeline</h4>
+          <div id="sideActivityList" class="space-y-2 text-xs">
+            <!-- Activity Items -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="p-3 border-t border-slate-100 bg-slate-50/70 text-center flex items-center justify-between space-x-2">
+        <button onclick="startNewChat()" class="text-xs font-bold text-slate-600 hover:text-indigo-600 flex items-center justify-center space-x-1 py-1 px-2 rounded-lg bg-white border border-slate-200 flex-1">
+          <span>➕ New Chat</span>
+        </button>
+        <button onclick="loadAnalytics()" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center justify-center space-x-1 py-1 px-2 rounded-lg bg-white border border-slate-200 flex-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- USER LOGIN / SWITCH MODAL -->
+  <div id="loginModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-sm w-full p-6 space-y-4">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center font-bold text-xl">
+          👤
+        </div>
+        <h3 class="text-lg font-bold text-slate-900">Student Profile</h3>
+        <p class="text-xs text-slate-500">Switch student handle to synchronize your adaptive knowledge graph.</p>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Username</label>
+        <input type="text" id="modalUsernameInput" value="alex" placeholder="e.g. alex, maya, john_doe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeLoginModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2.5 rounded-xl transition">
+          Cancel
+        </button>
+        <button onclick="confirmLogin()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm py-2.5 rounded-xl shadow-md transition">
+          Save & Load
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Application Script -->
+  <script src="/app.js"></script>
+</body>
+</html>
